@@ -224,11 +224,11 @@ def setLevel(val) {
 def on() {
     sendEvent(name: "status", value: 'playing')
     // request('cmd0=PutZone_OnOff%2FON')
-    request('cmd=MainZone/index.put.asp?cmd0=PutSystem_OnStandby%2FON&cmd1=aspMainZone_WebUpdateStatus%2F')
+    request('cmd0=PutSystem_OnStandby%2FON')
 }
 def off() {
     sendEvent(name: "status", value: 'paused')
-request('cmd0=MainZone/index.put.asp?cmd0=PutSystem_OnStandby%2FSTANDBY&cmd1=aspMainZone_WebUpdateStatus%2F')
+request('cmd0=PutSystem_OnStandby%2FSTANDBY')
     // request('cmd0=PutZone_OnOff%2FOFF')
 }
 def z2on() {
