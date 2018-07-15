@@ -356,12 +356,12 @@ def syncTiles(cmd){
     else sendEvent(name: "bd", value: "OFF")
     if (cmd == "DVD") sendEvent(name: "dvd", value: "ON")
     else sendEvent(name: "dvd", value: "OFF")
-    if (cmd == "MPLAY") sendEvent(name: "mp", value: "ON")
-    else sendEvent(name: "mp", value: "OFF")
-    if (cmd == "BT") sendEvent(name: "bt", value: "ON")
-    else sendEvent(name: "bt", value: "OFF")
-    if (cmd == "GAME") sendEvent(name: "game", value: "ON")
-    else sendEvent(name: "game", value: "OFF")
+    if (cmd == "NET/USB") sendEvent(name: "net", value: "ON")
+    else sendEvent(name: "net", value: "OFF")
+    if (cmd == "DOCK") sendEvent(name: "dock", value: "ON")
+    else sendEvent(name: "dock", value: "OFF")
+    if (cmd == "HDRADIO") sendEvent(name: "tuner", value: "ON")
+    else sendEvent(name: "tuner", value: "OFF")
 }
 def syncQTiles(cmd){
     if (cmd == "1") sendEvent(name: "q1", value: "ON")
