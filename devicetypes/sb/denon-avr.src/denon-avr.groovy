@@ -279,20 +279,20 @@ def dvd() {
     syncTiles(cmd)
     request("cmd0=PutZone_InputFunction%2F"+cmd)
 }
-def mp() {
-    def cmd = "MPLAY"
+def net() {
+    def cmd = "NET/USB"
     log.debug "Setting input to '${cmd}'"
     syncTiles(cmd)
     request("cmd0=PutZone_InputFunction%2F"+cmd)
 }
-def bt() {
-    def cmd = "BT"
+def dock() {
+    def cmd = "DOCK"
     log.debug "Setting input to '${cmd}'"
     syncTiles(cmd)
     request("cmd0=PutZone_InputFunction%2F"+cmd)
 }
-def game() {
-    def cmd = "GAME"
+def tuner() {
+    def cmd = "HDRADIO"
     log.debug "Setting input to '${cmd}'"
     syncTiles(cmd)
     request("cmd0=PutZone_InputFunction%2F"+cmd)
