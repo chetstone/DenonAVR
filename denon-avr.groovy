@@ -1,38 +1,31 @@
 /**
- * Denon Network Receiver
- * Based on Denon/Marantz receiver by Kristopher Kubicki
- * SmartThings driver to connect your Denon Network Receiver to SmartThings
- * Tested with AVR-S710W (game1 & game2 inputs are not available), AVR 1912
+ *      Denon Network Receiver
+ *        Based on Denon/Marantz receiver by Kristopher Kubicki
 
- TESED DENON MODELS
- ModelId
- EnModelUnknown,        //(0)
- EnModelAVRX10,        //(1)
- EnModelAVRX20,        //(2)
- EnModelAVRX30,        //(3)
- EnModelAVRX40,        //(4)
- EnModelAVRX50,        //(5)
- EnModelAVRX70,        //(6)
- EnModelNR15,        //(7)
- EnModelNR16,        //(8)
- EnModelSR50,        //(9)
- EnModelSR60,        //(10)
- EnModelSR70,        //(11)
- EnModelAV77,        //(12)
- EnModelAV88,        //(13)
+ScottE
+Original from https://github.com/sbdobrescu/DenonAVR/blob/master/devicetypes/sb/denon-avr.src/denon-avr.groovy
+
+ScottE
+Updated for Hubitat (physicalgraph->hubitat)
+Removed Simulator section
+Removed Media Player stuff
+Removed Tiles
 */
 
 metadata {
-    definition (name: 'Denon AVR', namespace: 'SB',
-                author: 'Bobby Dobrescu') {
+    definition (name: 'Denon AVR HTTP', namespace: 'ScottE',
+        author: 'Scott Ellis') {
         capability 'Actuator'
         capability 'Switch'
         capability 'Polling'
         capability 'Switch Level'
+/*
         capability 'Music Player'
+ */
         attribute 'mute', 'string'
         attribute 'input', 'string'
         attribute 'cbl', 'string'
+/* From orig */
         attribute 'tv', 'string'
         attribute 'dvd', 'string'
         attribute 'net', 'string'
@@ -45,6 +38,10 @@ metadata {
         attribute 'q2', 'string'
         attribute 'q3', 'string'
         attribute 'q4', 'string'
+/* From Scotte */
+        attribute 'bd', 'string'
+        attribute 'mp', 'string'
+/* end */
         attribute 'zone2', 'string'
 
         command 'mute'
@@ -55,6 +52,7 @@ metadata {
         command 'cbl'
         command 'tv'
         command 'bd'
+/* From orig */
         command 'dvd'
         command 'net'
         command 'dock'
@@ -67,106 +65,27 @@ metadata {
         command 'q3'
         command 'q4'
         command 'sPure'
+/* From scotte */
+        command 'mp'
+/* ======= end */
         command 'z2on'
         command 'z2off'
-                }
+        }
 
     preferences {
         input('destIp', 'text', title: 'IP', description: 'The device IP')
         input('destPort', 'number', title: 'Port', description: 'The port you wish to connect', defaultValue: 80)
         input(title: "Denon AVR version: ${getVersionTxt()}" ,description: null, type : 'paragraph')
     }
+}
 
-    simulator {
-    // TODO-: define status and reply messages here
-    }
-
-    //tiles {
-    tiles(scale: 2) {
-        multiAttributeTile(name:'multiAVR', type: 'mediaPlayer', width: 6, height: 4) {
-            tileAttribute('device.status', key: 'PRIMARY_CONTROL') {
-                attributeState ('paused', label: 'Paused', backgroundColor: '#53a7c0', defaultState: true)
-                attributeState ('playing', label: 'Playing', backgroundColor: '#79b821')
-            }
-            tileAttribute('device.status', key: 'MEDIA_STATUS') {
-                attributeState 'playing', label: '${name}', action:'switch.off'
-                attributeState 'paused', label: '${name}', action:'switch.on'
-            }
-            tileAttribute ('device.level', key: 'SLIDER_CONTROL') {
-                attributeState ('level', action:'setLevel')
-            }
-            tileAttribute ('device.mute', key: 'MEDIA_MUTED') {
-                attributeState('unmuted', action:'mute', nextState: 'muted')
-                attributeState('muted', action:'unmute', nextState: 'unmuted')
-            }
-        }
-        standardTile('input1', 'device.bd', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'Blu-ray', action: 'bd', icon:'st.Electronics.electronics8', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'Blu-ray', action: 'bd', icon:'st.Electronics.electronics8', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input2', 'device.dvd', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'Apple TV Music', action: 'dvd', icon:'st.Electronics.electronics14', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'Apple TV Music', action: 'dvd', icon:'st.Electronics.electronics14', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input3', 'device.cbl', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'Roku', action: 'cbl', icon:'st.Electronics.electronics3', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'Roku', action: 'cbl', icon:'st.Electronics.electronics3' , backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input4', 'device.tv', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'TV', action: 'tv', icon:'st.Electronics.electronics18', backgroundColor:'#FFFFFF', nextState:'ON'
-            state 'ON', label: 'TV', action: 'tv', icon:'st.Electronics.electronics18', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input5', 'device.net', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'Net/USB', action: 'net', icon:'st.Electronics.electronics9', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'Net/USB', action: 'net', icon:'st.Electronics.electronics9', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input6', 'device.dock', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'Shrine Room', action: 'dock', icon:'st.Entertainment.entertainment2', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'Shrine Room', action: 'dock', icon:'st.Entertainment.entertainment2', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input7', 'device.tuner', width: 2, height: 2, decoration: 'flat') {
-            state 'OFF', label: 'HD Radio', action: 'tuner', icon:'st.Electronics.electronics5', backgroundColor: '#FFFFFF', nextState:'ON'
-            state 'ON', label: 'HD Radio', action: 'tuner', icon:'st.Electronics.electronics5', backgroundColor: '#53a7c0', nextState:'OFF'
-        }
-        standardTile('input10', 'device.sound', width: 4, height: 2, decoration: 'flat') {
-            state 'sMusic', label: '${currentValue}', action:'sMusic', icon:'st.Entertainment.entertainment3', backgroundColor: '#FFFFFF', nextState:'sMovie'
-            state 'sMovie', label: '${currentValue}', action:'sMovie', icon:'st.Entertainment.entertainment9', backgroundColor: '#FFFFFF', nextState:'sGame'
-            state 'sGame', label: '${currentValue}', action:'sGame', icon:'st.Electronics.electronics6', backgroundColor: '#FFFFFF', nextState:'sPure'
-            state 'sPure', label: '${currentValue}', action:'sPure', icon:'st.Entertainment.entertainment15', backgroundColor: '#FFFFFF', nextState:'sMusic'
-        }
-        standardTile('input11', 'device.q1', width: 1, height: 1, decoration: 'flat') {
-            state 'OFF', label: 'Quick 1', action: 'q1', backgroundColor: '#53a7c0', nextState:'ON'   // icon:"st.Electronics.electronics5",
-            state 'ON', label: 'Quick 1', action: 'q1', backgroundColor: '#79b821', nextState:'OFF'  //, icon:"st.Electronics.electronics5"
-        }
-        standardTile('input12', 'device.q2', width: 1, height: 1, decoration: 'flat') {
-            state 'OFF', label: 'Quick 2', action: 'q2', backgroundColor:'#53a7c0' ,nextState:'ON'   //, icon:"st.Electronics.electronics5"
-            state 'ON', label: 'Quick 2', action: 'q2', backgroundColor: '#79b821' , nextState:'OFF'
-        }
-        standardTile('input13', 'device.q3', width: 1, height: 1, decoration: 'flat') {
-            state 'OFF', label: 'Quick 3', action: 'q3', backgroundColor: '#53a7c0', nextState:'ON'
-            state 'ON', label: 'Quick 3', action: 'q3', backgroundColor: '#79b821', nextState:'OFF'
-        }
-        standardTile('input14', 'device.q4', width: 1, height: 1, decoration: 'flat') {
-            state 'OFF', label: 'Quick 4', action: 'q4', backgroundColor: '#53a7c0', nextState:'ON'
-            state 'ON', label: 'Quick 4', action: 'q4', backgroundColor: '#79b821', nextState:'OFF'
-        }
-        standardTile('zone2', 'device.zone2', width: 1, height: 1, inactiveLabel: false, decoration: 'flat') {
-            state 'OFF', label:'Zone 2', action:'z2on', backgroundColor:'#53a7c0', nextState:'on'
-            state 'ON', label:'Zone 2', action:'z2off', backgroundColor:'#79b821', nextState:'off'
-        }
-        standardTile('poll', 'device.poll', width: 1, height: 1, decoration: 'flat') {
-            state 'poll', label: '', action: 'polling.poll', icon: 'st.secondary.refresh', backgroundColor: '#FFFFFF'
-        }
-        main 'multiAVR'
-        details(['multiAVR', 'input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input10', 'input11', 'input12', 'input13', 'input14', 'zone2', 'poll'])
-    }
-    }
 def parse(String description) {
     //log.debug "Parsing '${description}'"
     def map = stringToMap(description)
     if (!map.body || map.body == 'DQo=') { return }
     def body = new String(map.body.decodeBase64())
     def statusrsp = new XmlSlurper().parseText(body)
+
     //POWER STATUS
     def power = statusrsp.Power.value.text()
     if (power == 'ON') {
@@ -175,6 +94,7 @@ def parse(String description) {
     if (power != '' && power != 'ON') {
         sendEvent(name: 'status', value: 'paused')
     }
+
     //VOLUME STATUS
     def muteLevel = statusrsp.Mute.value.text()
     if (muteLevel == 'on') {
@@ -198,6 +118,7 @@ def parse(String description) {
             sendEvent(name: 'level', value: volLevel)
         }
     }
+
     //INPUT STATUS
     def inputCanonical = statusrsp.InputFuncSelect.value.text()
     sendEvent(name: 'input', value: inputCanonical)
@@ -210,7 +131,8 @@ def parse(String description) {
     //sendEvent(name: "sound", value: inputSurr)
     log.debug "Current Active Zone is: ${inputZone}"
 }
-//TILE ACTIONS
+
+//ACTIONS
 def setLevel(val) {
     sendEvent(name: 'mute', value: 'unmuted')
     sendEvent(name: 'level', value: val)
@@ -253,44 +175,44 @@ def toggleMute() {
 }
 def cbl() {
     def cmd = 'SAT/CBL'
+    syncInputs(cmd)
     log.debug "Setting input to ${cmd}"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def tv() {
     def cmd = 'TV'
+    syncInputs(cmd)
     log.debug "Setting input to ${cmd}"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def bd() {
     def cmd = 'BD'
+    syncInputs(cmd)
     log.debug "Setting input to ${cmd}"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def dvd() {
     def cmd = 'DVD'
+    syncInputs(cmd)
     log.debug "Setting input to ${cmd}"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def net() {
     def cmd = 'NET/USB'
+    syncInputs(cmd)
     log.debug "Setting input to '${cmd}'"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def dock() {
     def cmd = 'DOCK'
+    syncInputs(cmd)
     log.debug "Setting input to '${cmd}'"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def tuner() {
     def cmd = 'HDRADIO'
+    syncInputs(cmd)
     log.debug "Setting input to '${cmd}'"
-    syncTiles(cmd)
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 //SOUND MODES
@@ -343,7 +265,7 @@ def poll() {
     //log.debug "Polling requested"
     refresh()
 }
-def syncTiles(cmd) {
+def syncInputs(cmd) {
     if (cmd == 'SAT/CBL') sendEvent(name: 'cbl', value: 'ON')
     else sendEvent(name: 'cbl', value: 'OFF')
     if (cmd == 'TV') sendEvent(name: 'tv', value: 'ON')
@@ -369,29 +291,31 @@ def syncQTiles(cmd) {
     if (cmd == '4') sendEvent(name: 'q4', value: 'ON')
     else sendEvent(name: 'q4', value: 'OFF')
 }
+
 def refresh() {
     def hosthex = convertIPtoHex(destIp)
     def porthex = convertPortToHex(destPort)
     device.deviceNetworkId = "$hosthex:$porthex"
 
-    def hubAction = new physicalgraph.device.HubAction(
-        'method': 'GET',
-                                                       'path': '/goform/formMainZone_MainZoneXml.xml',
-                                                       'headers': [ HOST: "$destIp:$destPort" ]
-    )
+    def hubAction = new hubitat.device.HubAction(
+                'method': 'GET',
+                'path': '/goform/formMainZone_MainZoneXml.xml',
+                'headers': [ HOST: "$destIp:$destPort" ]
+            )
     hubAction
 }
+
 def request(body) {
     def hosthex = convertIPtoHex(destIp)
     def porthex = convertPortToHex(destPort)
     device.deviceNetworkId = "$hosthex:$porthex"
 
-    def hubAction = new physicalgraph.device.HubAction(
-        'method': 'POST',
-                                                       'path': '/MainZone/index.put.asp',
-                                                       'body': body,
-                                                       'headers': [ HOST: "$destIp:$destPort" ]
-    )
+    def hubAction = new hubitat.device.HubAction(
+                'method': 'POST',
+                'path': '/MainZone/index.put.asp',
+                'body': body,
+                'headers': [ HOST: "$destIp:$destPort" ]
+            )
 
     hubAction
 }
@@ -400,12 +324,12 @@ def request2(body) {
     def porthex = convertPortToHex(destPort)
     device.deviceNetworkId = "$hosthex:$porthex"
 
-    def hubAction = new physicalgraph.device.HubAction(
-        'method': 'POST',
-                                                       'path': '/Zone2/index.put.asp',
-                                                       'body': body,
-                                                       'headers': [ HOST: "$destIp:$destPort" ]
-    )
+    def hubAction = new hubitat.device.HubAction(
+                'method': 'POST',
+                'path': '/Zone2/index.put.asp',
+                'body': body,
+                'headers': [ HOST: "$destIp:$destPort" ]
+            )
 
     hubAction
 }
@@ -414,10 +338,12 @@ private String convertIPtoHex(ipAddress) {
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
     return hex
 }
+
 private String convertPortToHex(port) {
     String hexport = port.toString().format( '%04X', port.toInteger() )
     return hexport
 }
+
 def getVersionTxt() {
-    return '2.1'
+    return '2.2'
 }
