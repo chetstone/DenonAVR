@@ -184,10 +184,10 @@ def parse(String description) {
         sendEvent(name: 'mute', value: 'unmuted')
     }
     if (statusrsp.MasterVolume.value.text()) {
-        def int volLevel = (int) statusrsp.MasterVolume.value.toFloat() ?: -40.0
+        int volLevel = (int) statusrsp.MasterVolume.value.toFloat() ?: -40.0
         volLevel = (volLevel + 80)
         log.debug "Adjusted volume is ${volLevel}"
-        def int curLevel = 36
+        int curLevel = 36
         try {
             curLevel = device.currentValue('level')
             log.debug "Current volume is ${curLevel}"
@@ -214,7 +214,7 @@ def parse(String description) {
 def setLevel(val) {
     sendEvent(name: 'mute', value: 'unmuted')
     sendEvent(name: 'level', value: val)
-    def int scaledVal = val - 80
+    int scaledVal = val - 80
     request("cmd0=PutMasterVolumeSet%2F$scaledVal")
 }
 def on() {
