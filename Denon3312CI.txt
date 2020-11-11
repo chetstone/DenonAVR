@@ -1,0 +1,3 @@
+AVR3312CI_AVR3312_PROTOCOL_V7.6.0 http://openrb.com/wp-content/uploads/2012/02/AVR3312CI_AVR3312_PROTOCOL_V7.6.0.pdf'
+
+https://github.com/subutux/denonavr/blob/master/CommandEndpoints.txt
