@@ -5,7 +5,6 @@
 ScottE
 Original from https://github.com/sbdobrescu/DenonAVR/blob/master/devicetypes/sb/denon-avr.src/denon-avr.groovy
 
-
 ScottE
 Updated for Hubitat (physicalgraph->hubitat)
 Removed Simulator section
@@ -93,7 +92,7 @@ def parse(String description) {
       { log.debug "Not Parsing '${description}' because request body is empty"
         return
       }
-     log.debug "Base64 says ${map.body}"
+    log.debug "Base64 says ${map.body}"
     def body = new String(map.body.decodeBase64())
     def statusrsp = new XmlSlurper().parseText(body)
 
@@ -163,7 +162,7 @@ def off() {
 def z2on() {
     log.debug 'Turning on Zone 2'
     sendEvent(name: 'zone2', value: 'ON')
-    request 'cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2'
+    request('cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
 }
 def z2off() {
     log.debug 'Turning off Zone 2'
@@ -231,10 +230,10 @@ def tuner() {
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 def mp() {
-    def cmd = "MPLAY"
+    def cmd = 'MPLAY'
     syncInputs(cmd)
     log.debug "Setting input to '${cmd}'"
-    request("cmd0=PutZone_InputFunction%2F"+cmd)
+    request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
 
 //SOUND MODES
@@ -263,25 +262,25 @@ def q1() {
     def cmd = 'Quick1'
     log.debug "Setting quick input to '${cmd}'"
     syncInputs(cmd)
-    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
+    request2('cmd0=PutUserMode%2F' + cmd + '&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE')
 }
 def q2() {
     def cmd = 'Quick2'
     log.debug "Setting quick input to '${cmd}'"
     syncInputs(cmd)
-    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
+    request2('cmd0=PutUserMode%2F' + cmd + '&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE')
 }
 def q3() {
     def cmd = 'Quick3'
     log.debug "Setting quick input to '${cmd}'"
     syncInputs(cmd)
-    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
+    request2('cmd0=PutUserMode%2F' + cmd + '&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE')
 }
 def q4() {
     def cmd = 'Quick4'
     log.debug "Setting quick input to '${cmd}'"
     syncInputs(cmd)
-    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
+    request2('cmd0=PutUserMode%2F' + cmd + '&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE')
 }
 def poll() {
     //log.debug "Polling requested"
@@ -326,7 +325,7 @@ def refresh() {
                 'path': '/goform/formMainZone_MainZoneXml.xml',
                 'headers': [ HOST: "$destIp:$destPort" ]
             )
-log.debug "Refresh gets ${hubAction}"
+    log.debug "Refresh gets ${hubAction}"
     hubAction
 }
 
@@ -341,7 +340,7 @@ def request(body) {
                 'body': body,
                 'headers': [ HOST: "$destIp:$destPort" ]
            )
-log.debug "Request gets ${hubAction}"
+    log.debug "Request gets ${hubAction}"
     hubAction
 }
 def request2(body) {
@@ -356,7 +355,7 @@ def request2(body) {
                 'headers': [ HOST: "$destIp:$destPort" ]
             )
 
-log.debug "Request2 gets ${hubAction}"
+    log.debug "Request2 gets ${hubAction}"
     hubAction
 }
 
