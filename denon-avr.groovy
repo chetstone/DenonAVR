@@ -21,14 +21,17 @@ Removed Tiles
 metadata {
     definition (name: 'Denon AVR HTTP', namespace: 'chetstone',
         author: 'Chester Wood') {
-        capability 'Actuator'
-        capability 'Switch'
+        //capability 'Actuator'
+        capability 'Outlet'
         capability 'Polling'
-        // capability 'SwitchLevel'
+        //capability 'RelaySwitch'
         capability 'MusicPlayer'
+        capability 'Refresh'
 
+        attribute 'switch', 'string'
         attribute 'mute', 'string'
         attribute 'input', 'string'
+        attribute 'sound', 'string'
         attribute 'cbl', 'string'
         attribute 'cd', 'string'
 /* From orig */
@@ -74,8 +77,8 @@ metadata {
 /* From scotte */
         command 'mp'
 /* ======= end */
-        command 'z2on'
-        command 'z2off'
+        command 'on'
+        command 'off'
         }
 
     preferences {
@@ -93,8 +96,9 @@ def parse(String description) {
       }
     log.debug "Base64 says ${map.body}"
     def body = new String(map.body.decodeBase64())
+    log.debug "Body is ${body}"
     def statusrsp = new XmlSlurper().parseText(body)
-
+    log.debug "StatusRSP is ${statusrsp}"
     //POWER STATUS
     def power = statusrsp.Power.value.text()
     if (power == 'ON') {
@@ -113,11 +117,11 @@ def parse(String description) {
         sendEvent(name: 'mute', value: 'unmuted')
     }
     if (statusrsp.MasterVolume.value.text()) {
+        try {
         int volLevel = (int) statusrsp.MasterVolume.value.toFloat() ?: -40.0
         volLevel = (volLevel + 80)
         log.debug "Adjusted volume is ${volLevel}"
         int curLevel = 36
-        try {
             curLevel = device.currentValue('level')
             log.debug "Current volume is ${curLevel}"
         } catch (NumberFormatException nfe) {
@@ -148,16 +152,16 @@ def setLevel(val) {
     int scaledVal = val - 80
     request("cmd0=PutMasterVolumeSet%2F$scaledVal")
 }
-def on() {
-    sendEvent(name: 'status', value: 'playing')
-    // request('cmd0=PutZone_OnOff%2FON')
-    request('cmd0=PutSystem_OnStandby%2FON')
-}
-def off() {
-    sendEvent(name: 'status', value: 'paused')
-    request('cmd0=PutSystem_OnStandby%2FSTANDBY')
-// request('cmd0=PutZone_OnOff%2FOFF')
-}
+// def on() {
+//     sendEvent(name: 'status', value: 'playing')
+//     // request('cmd0=PutZone_OnOff%2FON')
+//     request('cmd0=PutSystem_OnStandby%2FON')
+// }
+// def off() {
+//     sendEvent(name: 'status', value: 'paused')
+//     request('cmd0=PutSystem_OnStandby%2FSTANDBY')
+// // request('cmd0=PutZone_OnOff%2FOFF')
+// }
 def play() {
     sendEvent(name: 'status', value: 'playing')
     // request('cmd0=PutZone_OnOff%2FON')
@@ -168,14 +172,16 @@ def pause() {
     request('cmd0=PutSystem_OnStandby%2FSTANDBY')
 // request('cmd0=PutZone_OnOff%2FOFF')
 }
-def z2on() {
+def on() { //z2
     log.debug 'Turning on Zone 2'
     sendEvent(name: 'zone2', value: 'ON')
+    sendEvent(name: 'switch', value: 'on')
     request('cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
 }
-def z2off() {
+def off() { //z2
     log.debug 'Turning off Zone 2'
     sendEvent(name: 'zone2', value: 'OFF')
+    sendEvent(name: 'switch', value: 'off')
     request('cmd0=PutZone_OnOff%2FOFF&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
 }
 def mute() {
