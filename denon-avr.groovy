@@ -5,16 +5,23 @@
 ScottE
 Original from https://github.com/sbdobrescu/DenonAVR/blob/master/devicetypes/sb/denon-avr.src/denon-avr.groovy
 
+
 ScottE
 Updated for Hubitat (physicalgraph->hubitat)
 Removed Simulator section
 Removed Media Player stuff
 Removed Tiles
+ */
+
+/*
+ chetstone
+ Fixed some commands with info from
+ https://github.com/subutux/denonavr/blob/master/CommandEndpoints.txt
 */
 
 metadata {
-    definition (name: 'Denon AVR HTTP', namespace: 'ScottE',
-        author: 'Scott Ellis') {
+    definition (name: 'Denon AVR HTTP', namespace: 'chetstone',
+        author: 'Chester Wood') {
         capability 'Actuator'
         capability 'Switch'
         capability 'Polling'
@@ -25,6 +32,7 @@ metadata {
         attribute 'mute', 'string'
         attribute 'input', 'string'
         attribute 'cbl', 'string'
+        attribute 'cd', 'string'
 /* From orig */
         attribute 'tv', 'string'
         attribute 'dvd', 'string'
@@ -47,10 +55,10 @@ metadata {
         command 'mute'
         command 'unmute'
         command 'toggleMute'
-        command 'inputSelect', ['string']
-        command 'inputNext'
+        /* command 'inputSelect', ['string'] */
         command 'cbl'
         command 'tv'
+        command 'cd'
         command 'bd'
 /* From orig */
         command 'dvd'
@@ -80,9 +88,12 @@ metadata {
 }
 
 def parse(String description) {
-    //log.debug "Parsing '${description}'"
     def map = stringToMap(description)
-    if (!map.body || map.body == 'DQo=') { return }
+    if (!map.body || map.body == 'DQo=' || map.body == '}')
+      { log.debug "Not Parsing '${description}' because request body is empty"
+        return
+      }
+     log.debug "Base64 says ${map.body}"
     def body = new String(map.body.decodeBase64())
     def statusrsp = new XmlSlurper().parseText(body)
 
@@ -152,14 +163,12 @@ def off() {
 def z2on() {
     log.debug 'Turning on Zone 2'
     sendEvent(name: 'zone2', value: 'ON')
-    request2('cmd0=MainZone/index.put.asp?cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
-// request2('cmd0=PutZone_OnOff%2FON')
+    request 'cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2'
 }
 def z2off() {
     log.debug 'Turning off Zone 2'
     sendEvent(name: 'zone2', value: 'OFF')
-    request2('cmd0=MainZone/index.put.asp?cmd0=PutZone_OnOff%2FSTANDBY&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
-// request2('cmd0=PutZone_OnOff%2FOFF')
+    request('cmd0=PutZone_OnOff%2FOFF&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
 }
 def mute() {
     sendEvent(name: 'mute', value: 'muted')
@@ -181,6 +190,12 @@ def cbl() {
 }
 def tv() {
     def cmd = 'TV'
+    syncInputs(cmd)
+    log.debug "Setting input to ${cmd}"
+    request('cmd0=PutZone_InputFunction%2F' + cmd)
+}
+def cd() {
+    def cmd = 'CD'
     syncInputs(cmd)
     log.debug "Setting input to ${cmd}"
     request('cmd0=PutZone_InputFunction%2F' + cmd)
@@ -215,6 +230,13 @@ def tuner() {
     log.debug "Setting input to '${cmd}'"
     request('cmd0=PutZone_InputFunction%2F' + cmd)
 }
+def mp() {
+    def cmd = "MPLAY"
+    syncInputs(cmd)
+    log.debug "Setting input to '${cmd}'"
+    request("cmd0=PutZone_InputFunction%2F"+cmd)
+}
+
 //SOUND MODES
 def sMusic() {
     def cmd = 'MUSIC'
@@ -234,32 +256,32 @@ def sGame() {
 def sPure() {
     def cmd = 'PURE DIRECT'
     log.debug "Setting input to '${cmd}'"
-    request('cmd0=PutZone_InputFunction%2F' + cmd)
+    request('cmd0=PutSurroundMode%2FPURE+DIRECT&cmd1=aspMainZone_WebUpdateStatus%2F')
 }
 //QUICK MODES
 def q1() {
-    def cmd = '1'
+    def cmd = 'Quick1'
     log.debug "Setting quick input to '${cmd}'"
-    syncQTiles(cmd)
-    request('cmd0=PutUserMode%2FQuick%2F' + cmd)
+    syncInputs(cmd)
+    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
 }
 def q2() {
-    def cmd = '2'
+    def cmd = 'Quick2'
     log.debug "Setting quick input to '${cmd}'"
-    syncQTiles(cmd)
-    request('cmd0=PutSurroundMode%2F' + cmd)
+    syncInputs(cmd)
+    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
 }
 def q3() {
-    def cmd = '3'
+    def cmd = 'Quick3'
     log.debug "Setting quick input to '${cmd}'"
-    syncQTiles(cmd)
-    request('cmd0=PutSurroundMode%2F' + cmd)
+    syncInputs(cmd)
+    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
 }
 def q4() {
-    def cmd = '4'
+    def cmd = 'Quick4'
     log.debug "Setting quick input to '${cmd}'"
-    syncQTiles(cmd)
-    request('cmd0=PutZone_InputFunction%2F' + cmd)
+    syncInputs(cmd)
+    request2('cmd0=PutUserMode%2F' + cmd + "&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=MAIN+ZONE")
 }
 def poll() {
     //log.debug "Polling requested"
@@ -270,6 +292,8 @@ def syncInputs(cmd) {
     else sendEvent(name: 'cbl', value: 'OFF')
     if (cmd == 'TV') sendEvent(name: 'tv', value: 'ON')
     else sendEvent(name: 'tv', value: 'OFF')
+    if (cmd == 'CD') sendEvent(name: 'cd', value: 'ON')
+    else sendEvent(name: 'cd', value: 'OFF')
     if (cmd == 'BD') sendEvent(name: 'bd', value: 'ON')
     else sendEvent(name: 'bd', value: 'OFF')
     if (cmd == 'DVD') sendEvent(name: 'dvd', value: 'ON')
@@ -302,6 +326,7 @@ def refresh() {
                 'path': '/goform/formMainZone_MainZoneXml.xml',
                 'headers': [ HOST: "$destIp:$destPort" ]
             )
+log.debug "Refresh gets ${hubAction}"
     hubAction
 }
 
@@ -315,8 +340,8 @@ def request(body) {
                 'path': '/MainZone/index.put.asp',
                 'body': body,
                 'headers': [ HOST: "$destIp:$destPort" ]
-            )
-
+           )
+log.debug "Request gets ${hubAction}"
     hubAction
 }
 def request2(body) {
@@ -326,11 +351,12 @@ def request2(body) {
 
     def hubAction = new hubitat.device.HubAction(
                 'method': 'POST',
-                'path': '/Zone2/index.put.asp',
+                'path': '/QuickSelect/index.put.asp',
                 'body': body,
                 'headers': [ HOST: "$destIp:$destPort" ]
             )
 
+log.debug "Request2 gets ${hubAction}"
     hubAction
 }
 
@@ -345,5 +371,5 @@ private String convertPortToHex(port) {
 }
 
 def getVersionTxt() {
-    return '2.2'
+    return '2.3'
 }
