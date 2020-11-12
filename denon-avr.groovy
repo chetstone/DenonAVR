@@ -24,10 +24,9 @@ metadata {
         capability 'Actuator'
         capability 'Switch'
         capability 'Polling'
-        capability 'Switch Level'
-/*
-        capability 'Music Player'
- */
+        // capability 'SwitchLevel'
+        capability 'MusicPlayer'
+
         attribute 'mute', 'string'
         attribute 'input', 'string'
         attribute 'cbl', 'string'
@@ -155,6 +154,16 @@ def on() {
     request('cmd0=PutSystem_OnStandby%2FON')
 }
 def off() {
+    sendEvent(name: 'status', value: 'paused')
+    request('cmd0=PutSystem_OnStandby%2FSTANDBY')
+// request('cmd0=PutZone_OnOff%2FOFF')
+}
+def play() {
+    sendEvent(name: 'status', value: 'playing')
+    // request('cmd0=PutZone_OnOff%2FON')
+    request('cmd0=PutSystem_OnStandby%2FON')
+}
+def pause() {
     sendEvent(name: 'status', value: 'paused')
     request('cmd0=PutSystem_OnStandby%2FSTANDBY')
 // request('cmd0=PutZone_OnOff%2FOFF')
