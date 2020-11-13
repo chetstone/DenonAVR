@@ -16,19 +16,22 @@ Removed Tiles
  chetstone
  Fixed some commands with info from
  https://github.com/subutux/denonavr/blob/master/CommandEndpoints.txt
+ How to get up to date status from device? Use custom callback for hubAction
+ in request() and call refresh() from it
 */
 
 metadata {
     definition (name: 'Denon AVR HTTP', namespace: 'chetstone',
         author: 'Chester Wood') {
-        //capability 'Actuator'
-        capability 'Outlet'
+        capability 'Actuator'
         capability 'Polling'
-        //capability 'RelaySwitch'
         capability 'MusicPlayer'
         capability 'Refresh'
+        capability 'Switch'
 
-        attribute 'switch', 'string'
+        attribute 'switch', 'enum'
+        attribute 'level', 'number'
+        attribute 'trackDescription', 'string'
         attribute 'mute', 'string'
         attribute 'input', 'string'
         attribute 'sound', 'string'
@@ -84,6 +87,7 @@ metadata {
     preferences {
         input('destIp', 'text', title: 'IP', description: 'The device IP')
         input('destPort', 'number', title: 'Port', description: 'The port you wish to connect', defaultValue: 80)
+            // input('zone', 'enum', title: 'Zone', description: 'The zone this driver controls', defaultValue: 'Main', options: ['Main', 'Zone2'])
         input(title: "Denon AVR version: ${getVersionTxt()}" ,description: null, type : 'paragraph')
     }
 }
@@ -139,6 +143,7 @@ def parse(String description) {
 
     def inputSurr = statusrsp.selectSurround.value.text()
     sendEvent(name: 'sound', value: inputSurr)
+    sendEvent(name: 'trackDescription', value: inputSurr)
     log.debug "Current Surround is: ${inputSurr}"
     def inputZone = statusrsp.RenameZone.value.text()
     //sendEvent(name: "sound", value: inputSurr)
@@ -152,37 +157,34 @@ def setLevel(val) {
     int scaledVal = val - 80
     request("cmd0=PutMasterVolumeSet%2F$scaledVal")
 }
-// def on() {
-//     sendEvent(name: 'status', value: 'playing')
-//     // request('cmd0=PutZone_OnOff%2FON')
-//     request('cmd0=PutSystem_OnStandby%2FON')
-// }
-// def off() {
-//     sendEvent(name: 'status', value: 'paused')
-//     request('cmd0=PutSystem_OnStandby%2FSTANDBY')
-// // request('cmd0=PutZone_OnOff%2FOFF')
-// }
-def play() {
+def play(zone = 'Main') {
+    log.debug "Turning on ${zone}"
     sendEvent(name: 'status', value: 'playing')
-    // request('cmd0=PutZone_OnOff%2FON')
-    request('cmd0=PutSystem_OnStandby%2FON')
+    if ( zone == 'Main') {
+        request('cmd0=PutSystem_OnStandby%2FON')
+     } else {
+        sendEvent(name: 'zone2', value: 'ON')
+        sendEvent(name: 'switch', value: 'on')
+        request('cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
+    }
 }
-def pause() {
-    sendEvent(name: 'status', value: 'paused')
-    request('cmd0=PutSystem_OnStandby%2FSTANDBY')
-// request('cmd0=PutZone_OnOff%2FOFF')
+def pause(zone = 'Main') {
+    log.debug "Turning off ${zone}"
+    if ( zone == 'Main') {
+        sendEvent(name: 'status', value: 'paused')
+        request('cmd0=PutSystem_OnStandby%2FSTANDBY')
+    } else {
+        sendEvent(name: 'zone2', value: 'OFF')
+        sendEvent(name: 'switch', value: 'off')
+        request('cmd0=PutZone_OnOff%2FOFF&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
+    }
+
 }
 def on() { //z2
-    log.debug 'Turning on Zone 2'
-    sendEvent(name: 'zone2', value: 'ON')
-    sendEvent(name: 'switch', value: 'on')
-    request('cmd0=PutZone_OnOff%2FON&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
+    play('Main')
 }
 def off() { //z2
-    log.debug 'Turning off Zone 2'
-    sendEvent(name: 'zone2', value: 'OFF')
-    sendEvent(name: 'switch', value: 'off')
-    request('cmd0=PutZone_OnOff%2FOFF&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
+    pause('Main')
 }
 def mute() {
     sendEvent(name: 'mute', value: 'muted')
