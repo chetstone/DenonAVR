@@ -12,12 +12,6 @@ Removed Media Player stuff
 Removed Tiles
  */
 
-/*
- chetstone
- Fixed some commands with info from
- https://github.com/subutux/denonavr/blob/master/CommandEndpoints.txt
-*/
-
 metadata {
     definition (name: 'Denon AVR HTTP', namespace: 'chetstone',
         author: 'Chester Wood') {
@@ -87,20 +81,20 @@ metadata {
     preferences {
         input('destIp', 'text', title: 'IP', description: 'The device IP')
         input('destPort', 'number', title: 'Port', description: 'The port you wish to connect', defaultValue: 80)
-            // input('zone', 'enum', title: 'Zone', description: 'The zone this driver controls', defaultValue: 'Main', options: ['Main', 'Zone2'])
+        // input('zone', 'enum', title: 'Zone', description: 'The zone this driver controls', defaultValue: 'Main', options: ['Main', 'Zone2'])
         input(title: "Denon AVR version: ${getVersionTxt()}" ,description: null, type : 'paragraph')
     }
 }
 
 def parse(String description) {
     def map = stringToMap(description)
-    if (!map.body || map.body == 'DQo=' || map.body == '}')
-    {  log.debug "request body is empty in Parse, refreshing..."
+    if (!map.body || map.body == 'DQo=' || map.body == '}') {
+        log.debug 'request body is empty in Parse, refreshing...'
         return refresh()
     }
     log.debug "Base64 says ${map.body}"
     def body = new String(map.body.decodeBase64())
-        //log.debug "Body is ${body}"
+    //log.debug "Body is ${body}"
     def statusrsp = new XmlSlurper().parseText(body)
     log.debug "StatusRSP is ${statusrsp}"
     //POWER STATUS
@@ -122,10 +116,10 @@ def parse(String description) {
     }
     if (statusrsp.MasterVolume.value.text()) {
         try {
-        int volLevel = (int) statusrsp.MasterVolume.value.toFloat() ?: -40.0
-        volLevel = (volLevel + 80)
-        log.debug "Adjusted volume is ${volLevel}"
-        int curLevel = 36
+            int volLevel = (int) statusrsp.MasterVolume.value.toFloat() ?: -40.0
+            volLevel = (volLevel + 80)
+            log.debug "Adjusted volume is ${volLevel}"
+            int curLevel = 36
             curLevel = device.currentValue('level')
             log.debug "Current volume is ${curLevel}"
         } catch (NumberFormatException nfe) {
@@ -178,7 +172,6 @@ def pause(zone = 'Main') {
         sendEvent(name: 'switch', value: 'off')
         request('cmd0=PutZone_OnOff%2FOFF&cmd1=aspMainZone_WebUpdateStatus%2F&ZoneName=ZONE2')
     }
-
 }
 def on() { //z2
     play('Main')
@@ -187,7 +180,7 @@ def off() { //z2
     pause('Main')
 }
 def push() {
-   play('Zone2')
+    play('Zone2')
 }
 def mute() {
     sendEvent(name: 'mute', value: 'muted')
