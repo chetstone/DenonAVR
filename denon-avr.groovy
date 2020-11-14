@@ -16,8 +16,6 @@ Removed Tiles
  chetstone
  Fixed some commands with info from
  https://github.com/subutux/denonavr/blob/master/CommandEndpoints.txt
- How to get up to date status from device? Use custom callback for hubAction
- in request() and call refresh() from it
 */
 
 metadata {
@@ -95,12 +93,12 @@ metadata {
 def parse(String description) {
     def map = stringToMap(description)
     if (!map.body || map.body == 'DQo=' || map.body == '}')
-      { log.debug "Not Parsing '${description}' because request body is empty"
-        return
-      }
+    {  log.debug "request body is empty in Parse, refreshing..."
+        return refresh()
+    }
     log.debug "Base64 says ${map.body}"
     def body = new String(map.body.decodeBase64())
-    log.debug "Body is ${body}"
+        //log.debug "Body is ${body}"
     def statusrsp = new XmlSlurper().parseText(body)
     log.debug "StatusRSP is ${statusrsp}"
     //POWER STATUS
