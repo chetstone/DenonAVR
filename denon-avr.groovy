@@ -26,6 +26,7 @@ metadata {
         capability 'MusicPlayer'
         capability 'Refresh'
         capability 'Switch'
+        capability 'Momentary'
 
         attribute 'switch', 'enum'
         attribute 'level', 'number'
@@ -54,6 +55,7 @@ metadata {
 /* end */
         attribute 'zone2', 'string'
 
+        command 'push'
         command 'mute'
         command 'unmute'
         command 'toggleMute'
@@ -183,6 +185,9 @@ def on() { //z2
 }
 def off() { //z2
     pause('Main')
+}
+def push() {
+   play('Zone2')
 }
 def mute() {
     sendEvent(name: 'mute', value: 'muted')
